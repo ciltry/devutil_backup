@@ -1,0 +1,38 @@
+
+<div class="dijitDialogTitleBar" data-dojo-attach-point="titleBar">
+	<span class="dijitDialogTitle" id="newConnectionDialog_title"
+		role="heading" data-dojo-attach-point="titleNode" level="1">My
+		Dialog</span> <span tabindex="-1" title="取消" class="dijitDialogCloseIcon"
+		role="button" data-dojo-attach-point="closeButtonNode"
+		data-dojo-attach-event="ondijitclick: onCancel"> <span
+		title="取消" class="closeText" data-dojo-attach-point="closeText">x</span>
+	</span>
+</div>
+<div class="dijitDialogPaneContent dijitDialogSingleChild"
+	data-dojo-attach-point="containerNode">
+	<div class="dijitContentPane" id="dijit_layout_ContentPane_1"
+		style="padding: 0px; width: 100%;"
+		widgetId="dijit_layout_ContentPane_1">
+		<div class="dijitContentPane" id="dijit_layout_ContentPane_0"
+			style="padding: 0px; width: 30%; text-align: right; margin-top: 3px; float: left;"
+			widgetId="dijit_layout_ContentPane_0">
+			<label>连接名：</label>
+		</div>
+		<div class="dijitContentPane" id="dijit_layout_ContentPane_2"
+			style="padding: 0px; width: 69%; text-align: left; float: right;"
+			widgetId="dijit_layout_ContentPane_2">
+			<div class="dijit dijitReset dijitInline dijitLeft dijitTextBox"
+				id="widget_connectionName" role="presentation"
+				widgetId="connectionName">
+				<div class="dijitReset dijitInputField dijitInputContainer">
+					<input name="connectionName" tabindex="0"
+						class="dijitReset dijitInputInner" id="connectionName" type="text"
+						value="" data-dojo-attach-point="textbox,focusNode"
+						autocomplete="off"><span
+						class="dijitPlaceHolder dijitInputField">连接名</span>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+

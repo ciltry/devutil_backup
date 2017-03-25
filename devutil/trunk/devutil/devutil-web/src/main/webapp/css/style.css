@@ -1,0 +1,120 @@
+body {
+font-size: 12px;
+}
+input {
+	width: 170px;
+	-moz-border-radius: 10px;
+	-webkit-border-radius: 10px;
+	border-radius: 5px;
+	padding: 5px;
+	background-color: #aaa;
+}
+
+input[type="submit"] {
+	width: 182px;
+}
+
+a {
+	color: #555;
+}
+
+a:hover {
+	color: #333;
+}
+
+a:active {
+	color: #555;
+}
+
+
+.button {
+	display: inline-block;
+	outline: none;
+	cursor: pointer;
+	text-align: center;
+	text-decoration: none;
+	font: 16px/100% 'Microsoft yahei',Arial, Helvetica, sans-serif;
+	padding: 4px;
+	text-shadow: 0 1px 1px rgba(0,0,0,.3);
+	-moz-border-radius: 10px;
+	-webkit-border-radius: 10px;
+	border-radius: 5px;
+	-webkit-box-shadow: 0 1px 2px rgba(0,0,0,.2);
+	-moz-box-shadow: 0 1px 2px rgba(0,0,0,.2);
+	box-shadow: 0 1px 2px rgba(0,0,0,.2);
+}
+
+.white {
+	color: #ccc;
+	border: solid 1px #b7b7b7;
+	background: gray;
+	filter:  progid:DXImageTransform.Microsoft.gradient(startColorstr='gray', endColorstr='#b7b7b7');
+}
+.white:hover {
+	background: #b7b7b7;
+	filter:  progid:DXImageTransform.Microsoft.gradient(startColorstr='gray', endColorstr='#dcdcdc');
+}
+.white:active {
+	color: #ddd;
+	background: #c7c7c7;
+	filter:  progid:DXImageTransform.Microsoft.gradient(startColorstr='#ededed', endColorstr='#b7b7b7');
+}
+.roundCorderC{
+background-color: red;
+font-family:Arial;
+-moz-border-radius-topleft: 20px;
+-moz-border-radius: 20px;
+-webkit-border-radius: 20px;
+border-radius: 20px;
+padding: 20px;
+border: solid 2px #b7b7b7;
+}
+
+.roundCorderN{
+background-color: red;
+font-family:Arial;
+-moz-border-radius-topleft: 5px;
+-moz-border-radius: 5px;
+-webkit-border-radius: 5px;
+border-radius: 5px;
+/*border: solid 2px #b7b7b7;*/
+}
+
+.divbuttonVertical:active {
+	margin-top: -1px;
+	background-color: gray;
+	border: solid 1px black;
+	border-left: solid 1px black;
+	border-right: none;
+	padding-top: 10px;
+	padding-bottom: 10px;
+	padding-left: 2px;
+	padding-right: 7px;
+	color: white;
+}
+
+.divbuttonVertical:hover {
+	margin-right: -1px;
+	border: solid 1px black;
+	border-left: solid 1px black;
+	border-right: none;
+	background-color: gray;
+	color: black;
+	padding-right: 7px;
+}
+
+.divbuttonVertical {
+	margin-right: 0px;
+	cursor: pointer;
+	color: black;
+	margin-top: 0px;
+	background-color: #aaa;
+	padding-top: 11px;
+	padding-bottom: 10px;
+	padding-left: 3px;
+	padding-right: 6px;
+	border-right: none;
+	border-left: none;
+	border-bottom: none;
+	border-top: none;
+}
