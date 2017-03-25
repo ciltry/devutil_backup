@@ -1,0 +1,88 @@
+<div id="_createConnectionDialog">
+<table style="width: 100%">
+	<tr>
+		<td>
+			<label for="connectionName">连接名：</label>
+		</td>
+		<td>
+			<input id="connectionName" data-dojo-type="dijit/form/TextBox" style="width: 180px;" />
+		</td>
+	</tr>
+	<tr>
+		<td>
+			<label for="host">主机名：</label>
+		</td>
+		<td>
+			<input id="host" data-dojo-type="dijit/form/TextBox" style="width: 180px;"/>
+		</td>
+	</tr>
+	<tr>
+		<td>
+			<label for="port">端口：</label>
+		</td>
+		<td>
+			<input id="port" data-dojo-type="dijit/form/NumberTextBox" data-dojo-props="constraints:{pattern: '###'}" style="width: 180px;"/>
+		</td>
+	</tr>
+	<tr>
+		<td>
+			<label for="username">用户名：</label>
+		</td>
+		<td>
+			<input id="username" data-dojo-type="dijit/form/TextBox" style="width: 180px;"/>
+		</td>
+	</tr>
+	<tr>
+		<td>
+			<label for="password">密码：</label>
+		</td>
+		<td>
+			<input id="password" type="password" data-dojo-type="dijit/form/TextBox" style="width: 180px;" />
+		</td>
+	</tr>
+	<tr>
+		<td>
+			<label for="dbType">数据库类型：</label>
+		</td>
+		<td>
+			<select id="dbType" name="dbType" data-dojo-type="dijit/form/Select"  style="width: 180px;">
+		    <option value=""></option>
+		    <option value="MYSQL">MYSQL</option>
+		    <option value="ORACLE">ORACLE</option>
+		</select>
+		</td>
+	</tr>
+	<tr id="trdbname">
+		<td>
+			<label for="dbname">数据库名：</label>
+		</td>
+		<td>
+			<input id="dbname" data-dojo-type="dijit/form/TextBox" style="width: 180px;"/>
+		</td>
+	</tr>
+	<tr id="trsid">
+		<td>
+			<label for="sid">sid：</label>
+		</td>
+		<td>
+			<input id="sid" data-dojo-type="dijit/form/TextBox" style="width: 180px;"/>
+		</td>
+	</tr>
+	<tr id="trserviceName">
+		<td>
+			<label for="serviceName">服务名：</label>
+		</td>
+		<td>
+			<input id="serviceName" data-dojo-type="dijit/form/TextBox" style="width: 180px;"/>
+		</td>
+	</tr>
+	<tr>
+		<td colspan="2">
+			<button id="reset" data-dojo-type="dijit/form/Button" type="button">清除</button>
+			&nbsp;&nbsp;&nbsp;<button id="test" data-dojo-type="dijit/form/Button" type="button">测试</button>
+			&nbsp;&nbsp;&nbsp;<button id="cancel" data-dojo-type="dijit/form/Button" type="button">取消</button>
+			&nbsp;&nbsp;&nbsp;<button id="save" data-dojo-type="dijit/form/Button" type="button">保存</button>
+		</td>
+	</tr>
+</table>
+</div>
