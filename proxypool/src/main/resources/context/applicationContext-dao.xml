@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:jee="http://www.springframework.org/schema/jee" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="
+           http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+           http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd
+           http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee-3.0.xsd
+           http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
+           http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.0.xsd">
+    <bean id="common.propertyConfigurer"
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="ignoreResourceNotFound" value="true" />
+		<property name="ignoreUnresolvablePlaceholders" value="true" />
+		<property name="fileEncoding" value="UTF-8" />
+		<property name="locations">
+			<list>
+				<value>file:C:\Users\Sidney\代理商\proxypool\src\main\resources\db1.properties</value>
+			</list>
+		</property>
+	</bean>
+           
+	<bean id="dataSource_proxypool" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+		<property name="driverClassName">
+			<value>org.apache.derby.jdbc.EmbeddedDriver</value>
+		</property>
+		<property name="url">
+			<value>jdbc:derby:d:\dbstore\proxy;create=true</value>
+		</property>
+		<property name="username">
+			<value></value>
+		</property>
+		<property name="password">
+			<value></value>
+		</property>
+	</bean>
+	
+	
+	<bean id="transactionManager_proxypool" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource">
+			<ref bean="dataSource_proxypool" />
+		</property>
+	</bean>
+	<bean id="devutil_model_scan_package" class="java.lang.String">
+		<constructor-arg index="0">
+			<value>${devutil.model.scan.package}</value>
+		</constructor-arg>
+	</bean>
+	<bean id="devutil_default_schema" class="java.lang.String">
+		<constructor-arg index="0">
+			<value>${devutil.default.schema}</value>
+		</constructor-arg>
+	</bean>
+	
+	<tx:annotation-driven transaction-manager="transactionManager_proxypool"/>
+	
+	<bean id="proxyDao" class="dev.sidney.devutil.store.dao.impl.CommonDAODerbyImpl">
+		<property name="scanPackageName" ref="devutil_model_scan_package" />
+		<property name="defaultSchema" ref="devutil_default_schema" />
+		<property name="dataSource" ref="dataSource_proxypool" />
+	</bean>
+</beans>
+
+
+

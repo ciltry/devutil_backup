@@ -1,0 +1,537 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd" >
+<sqlMap namespace="PS_TA_TRADE_DAILY">
+    
+	<resultMap id="taTradeDailyResult" class="com.masapay.mas.basis.ps.model.TaTradeDaily">
+		<result column="BALANCE_ID" property="balanceId" jdbcType="VARCHAR" />
+		<result column="BALANCE_DATE" property="balanceDate" jdbcType="VARCHAR" />
+		<result column="MERCHANT_CODE" property="merchantCode" jdbcType="VARCHAR" />
+		<result column="MEMBER_CODE" property="memberCode" jdbcType="VARCHAR" />
+		<result column="CURRENCY" property="currency" jdbcType="CHAR" />
+		
+		<result column="CONSUME_BEGIN_AMOUNT" property="consumeBeginAmount"/>
+		<result column="CONSUME_DAY_AMOUNT" property="consumeDayAmount"/>
+		<result column="CONSUME_BEGIN_COUNT" property="consumeBeginCount"/>
+		<result column="CONSUME_DAY_COUNT" property="consumeDayCount"/>
+		
+		<result column="CONSUME_BEGIN_SUCC_AMOUNT" property="consumeBeginSuccAmount"/>
+		<result column="CONSUME_DAY_SUCC_AMOUNT" property="consumeDaySuccAmount"/>
+		<result column="CONSUME_BEGIN_SUCC_COUNT" property="consumeBeginSuccCount"/>
+		<result column="CONSUME_DAY_SUCC_COUNT" property="consumeDaySuccCount"/>
+		
+		<result column="REFUND_BEGIN_AMOUNT" property="refundBeginAmount"/>
+		<result column="REFUND_DAY_AMOUNT" property="refundDayAmount"/>
+		<result column="REFUND_BEGIN_COUNT" property="refundBeginCount"/>
+		<result column="REFUND_DAY_COUNT" property="refundDayCount"/>
+		
+		<result column="REFUND_BEGIN_SUCC_AMOUNT" property="refundBeginSuccAmount"/>
+		<result column="REFUND_DAY_SUCC_AMOUNT" property="refundDaySuccAmount"/>
+		<result column="REFUND_BEGIN_SUCC_COUNT" property="refundBeginSuccCount"/>
+		<result column="REFUND_DAY_SUCC_COUNT" property="refundDaySuccCount"/>
+		
+		<result column="SETTLE_BEGIN_SUCC_AMOUNT" property="settleBeginSuccAmount"/>
+		<result column="SETTLE_DAY_SUCC_AMOUNT" property="settleDaySuccAmount"/>
+		<result column="SETTLE_BEGIN_SUCC_COUNT" property="settleBeginSuccCount"/>
+		<result column="SETTLE_DAY_SUCC_COUNT" property="settleDaySuccCount"/>
+		
+	</resultMap>
+	
+	<resultMap class="com.masapay.mas.basis.ps.model.TradeBriefInfo" id="tradeBriefInfoResult">
+		<result column="MERCHANT_CODE" property="merchantCode"/>
+		<result column="SHORT_NAME" property="merchantShortName"/>
+		<result column="CURRENCY_CODE" property="currencyCode"/>
+		<result column="TRADE_AMOUNT" property="tradeAmount"/>
+		<result column="TRADE_COUNT" property="tradeCount"/>
+	</resultMap>
+	
+	<sql id="BASE_RESULT">
+		  BALANCE_ID ,
+		  BALANCE_DATE ,
+		  MERCHANT_CODE,
+		  MEMBER_CODE,
+		  CURRENCY,
+		  
+		  CONSUME_BEGIN_AMOUNT,
+		  CONSUME_DAY_AMOUNT,
+		  CONSUME_BEGIN_COUNT,
+		  CONSUME_DAY_COUNT,
+		
+		  CONSUME_BEGIN_SUCC_AMOUNT,
+		  CONSUME_DAY_SUCC_AMOUNT,
+		  CONSUME_BEGIN_SUCC_COUNT,
+		  CONSUME_DAY_SUCC_COUNT,
+		
+		  REFUND_BEGIN_AMOUNT,
+		  REFUND_DAY_AMOUNT,
+		  REFUND_BEGIN_COUNT,
+		  REFUND_DAY_COUNT,
+		
+		  REFUND_BEGIN_SUCC_AMOUNT,
+		  REFUND_DAY_SUCC_AMOUNT,
+		  REFUND_BEGIN_SUCC_COUNT,
+		  REFUND_DAY_SUCC_COUNT,
+		  
+		  SETTLE_BEGIN_SUCC_AMOUNT,
+		  SETTLE_DAY_SUCC_AMOUNT,
+		  SETTLE_BEGIN_SUCC_COUNT,
+		  SETTLE_DAY_SUCC_COUNT
+	</sql>
+	
+	<select id="nextSequences" resultClass="java.lang.Long">
+		SELECT PS.seq_ta_trade_daily_id.NEXTVAL FROM DUAL
+	</select>
+	
+	<select id="selectBalanceCountByDate" resultClass="java.lang.Long" parameterClass="java.lang.String">
+	    select count(1) from ps.ta_trade_daily t where t.balance_date = #balanceDate#
+	</select>
+	
+	<!-- 日结交易信息(T-1) -->
+	<insert id="processTradeDaily" >
+	   insert into ps.ta_trade_daily (  
+		  BALANCE_ID ,
+		  BALANCE_DATE ,
+		  MERCHANT_CODE,
+		  MEMBER_CODE,
+		  CURRENCY,
+		  
+		  CONSUME_BEGIN_AMOUNT,
+		  CONSUME_DAY_AMOUNT,
+		  CONSUME_BEGIN_COUNT,
+		  CONSUME_DAY_COUNT,
+		
+		  CONSUME_BEGIN_SUCC_AMOUNT,
+		  CONSUME_DAY_SUCC_AMOUNT,
+		  CONSUME_BEGIN_SUCC_COUNT,
+		  CONSUME_DAY_SUCC_COUNT,
+		
+		  REFUND_BEGIN_AMOUNT,
+		  REFUND_DAY_AMOUNT,
+		  REFUND_BEGIN_COUNT,
+		  REFUND_DAY_COUNT,
+		
+		  REFUND_BEGIN_SUCC_AMOUNT,
+		  REFUND_DAY_SUCC_AMOUNT,
+		  REFUND_BEGIN_SUCC_COUNT,
+		  REFUND_DAY_SUCC_COUNT,
+		  
+		  SETTLE_BEGIN_SUCC_AMOUNT,
+		  SETTLE_DAY_SUCC_AMOUNT,
+		  SETTLE_BEGIN_SUCC_COUNT,
+		  SETTLE_DAY_SUCC_COUNT
+		) 
+		with day_data as (
+		  select r.member_code ,
+		       r.MEMBER_NO ,
+		       r.TRADE_CURRENCY_CODE ,
+		       sum(r.TRADE_AMOUNT) as consume_day_amount,
+		       count(r.TRADE_AMOUNT) as consume_day_count,
+		       sum(case when r.status = 'S' then r.TRADE_AMOUNT else 0 end) as consume_day_succ_amount,
+		       sum(case when r.status = 'S' then 1 else 0 end) as consume_day_succ_count,
+		       sum(f.refunded_amount) as refund_day_amount,
+		       count(f.refunded_amount) as refund_day_count,
+		       sum(case when f.status = 'S' then f.refunded_amount else 0 end) as refund_day_succ_amount,
+		       sum(case when f.status = 'S' then 1 else 0 end) as refund_day_succ_count
+		    from ps.tt_gateway_order r
+		    left join (Select *
+					   From (select a.*,
+									row_number() over(partition by GATEWAY_ORDER_NO order by GATEWAY_ORDER_NO) t
+							   from ps.tr_gateway_refund_order a)
+					  where t = 1) f
+		    on r.gw_order_id = f.GATEWAY_ORDER_NO
+		 where 1 = 1
+		   and r.GMT_DEAL <![CDATA[ >= ]]> TO_DATE(to_char(sysdate-1, 'YYYY-MM-DD') || ' 00:00:00', 'YYYY-MM-DD HH24:MI:SS')
+		   and r.GMT_DEAL <![CDATA[ <= ]]> TO_DATE(to_char(sysdate-1, 'YYYY-MM-DD') || ' 23:59:59','YYYY-MM-DD HH24:MI:SS')
+		 group by r.member_code, r.MEMBER_NO, r.TRADE_CURRENCY_CODE)
+		 ,
+	     settle_data as (
+	        select s.member_code ,
+	         s.MEMBER_NO ,
+	         s.TRADE_CURRENCY_CODE ,
+	         sum(case when s.settle_status = 'Y' then s.trade_amount else 0 end) as settle_day_succ_amount,
+	         sum(case when s.settle_status = 'Y' then 1 else 0 end) as settle_day_succ_count
+	        from ps.tt_gateway_order s
+	       where 1 = 1
+	         and s.GMT_DEAL <![CDATA[ >= ]]> TO_DATE(to_char(sysdate-1, 'YYYY-MM-DD') || ' 00:00:00', 'YYYY-MM-DD HH24:MI:SS')
+	         and s.GMT_DEAL <![CDATA[ <= ]]> TO_DATE(to_char(sysdate-1, 'YYYY-MM-DD') || ' 23:59:59','YYYY-MM-DD HH24:MI:SS')
+	       group by s.member_code, s.MEMBER_NO, s.TRADE_CURRENCY_CODE
+	     )
+		 ,
+		 begin_data as ( 
+		    select t.merchant_code,
+		         t.member_code,
+		         t.currency,
+		         t.consume_begin_amount + t.consume_day_amount  as  consume_begin_amount,
+		         t.consume_begin_count + t.consume_day_count as consume_begin_count,
+		         t.consume_begin_succ_amount + t.consume_day_succ_amount as consume_begin_succ_amount,
+		         t.consume_begin_succ_count + t.consume_day_succ_count as consume_begin_succ_count,
+		         t.refund_begin_amount + t.refund_day_amount as refund_begin_amount,
+		         t.refund_begin_count + t.refund_day_count as refund_begin_count,
+		         t.refund_begin_succ_amount + t.refund_day_succ_amount as refund_begin_succ_amount,
+		         t.refund_begin_succ_count + t.refund_day_succ_count as refund_begin_succ_count,
+		         t.settle_begin_succ_amount + t.settle_day_succ_amount as settle_begin_succ_amount,
+		         t.settle_begin_succ_count + t.settle_day_succ_count as settle_begin_succ_count
+		    from PS.TA_TRADE_DAILY t 
+		    where t.balance_date = to_char(sysdate-2, 'YYYY-MM-DD'))
+		    
+		  select 'TA'||to_char(sysdate-1,'yyyymmdd')||lpad(get_seq_next('SEQ_TA_TRADE_DAILY_ID'),5,'0'),
+		         to_char(sysdate-1,'YYYY-MM-DD'),
+		         begin_data.merchant_code,
+	             begin_data.member_code ,
+	             begin_data.currency,
+	             begin_data.consume_begin_amount,
+	             (case when day_data.consume_day_amount is null then 0 else day_data.consume_day_amount end),
+	             (case when begin_data.consume_begin_count is null then 0 else begin_data.consume_begin_count end),
+	             (case when day_data.consume_day_count is null then 0 else day_data.consume_day_count end),
+	             (case when begin_data.consume_begin_succ_amount is null then 0 else begin_data.consume_begin_succ_amount end),
+	             (case when day_data.consume_day_succ_amount is null then 0 else day_data.consume_day_succ_amount end),
+	             (case when begin_data.consume_begin_succ_count is null then 0 else begin_data.consume_begin_succ_count end),
+	             (case when day_data.consume_day_succ_count is null then 0 else day_data.consume_day_succ_count end),
+	             (case when begin_data.refund_begin_amount is null then 0 else begin_data.refund_begin_amount end),
+	             (case when day_data.refund_day_amount is null then 0 else day_data.refund_day_amount end),
+	             (case when begin_data.refund_begin_count is null then 0 else begin_data.refund_begin_count end),
+	             (case when day_data.refund_day_count is null then 0 else day_data.refund_day_count end),
+	             (case when begin_data.refund_begin_succ_amount is null then 0 else begin_data.refund_begin_succ_amount end),
+	             (case when day_data.refund_day_succ_amount is null then 0 else day_data.refund_day_succ_amount end),
+	             (case when begin_data.refund_begin_succ_count is null then 0 else begin_data.refund_begin_succ_count end),
+	             (case when day_data.refund_day_succ_count is null then 0 else day_data.refund_day_succ_count end),
+	             (case when begin_data.settle_begin_succ_amount is null then 0 else begin_data.settle_begin_succ_amount end),
+	             (case when settle_data.settle_day_succ_amount is null then 0 else settle_data.settle_day_succ_amount end),
+	             (case when begin_data.settle_begin_succ_count is null then 0 else begin_data.settle_begin_succ_count end),
+             	 (case when settle_data.settle_day_succ_count is null then 0 else settle_data.settle_day_succ_count end)
+		  from day_data 
+	        right join  settle_data
+			    on settle_data.member_code =  day_data.member_code
+			    and settle_data.MEMBER_NO =  day_data.MEMBER_NO
+			    and settle_data.TRADE_CURRENCY_CODE  =  day_data.TRADE_CURRENCY_CODE
+		    right join  begin_data
+			    on settle_data.member_code = begin_data.merchant_code
+			    and settle_data.MEMBER_NO = begin_data.member_code
+			    and settle_data.TRADE_CURRENCY_CODE = begin_data.currency
+	</insert>
+	
+	<!-- 日结交易信息(指定时间) -->
+	<insert id="processTradeDailyOnDate" parameterClass="java.lang.String">
+	    insert into ps.ta_trade_daily (  
+		  BALANCE_ID ,
+		  BALANCE_DATE ,
+		  MERCHANT_CODE,
+		  MEMBER_CODE,
+		  CURRENCY,
+		  
+		  CONSUME_BEGIN_AMOUNT,
+		  CONSUME_DAY_AMOUNT,
+		  CONSUME_BEGIN_COUNT,
+		  CONSUME_DAY_COUNT,
+		
+		  CONSUME_BEGIN_SUCC_AMOUNT,
+		  CONSUME_DAY_SUCC_AMOUNT,
+		  CONSUME_BEGIN_SUCC_COUNT,
+		  CONSUME_DAY_SUCC_COUNT,
+		
+		  REFUND_BEGIN_AMOUNT,
+		  REFUND_DAY_AMOUNT,
+		  REFUND_BEGIN_COUNT,
+		  REFUND_DAY_COUNT,
+		
+		  REFUND_BEGIN_SUCC_AMOUNT,
+		  REFUND_DAY_SUCC_AMOUNT,
+		  REFUND_BEGIN_SUCC_COUNT,
+		  REFUND_DAY_SUCC_COUNT
+		) 
+		with day_data as (
+		  select r.member_code ,
+		       r.MEMBER_NO ,
+		       r.TRADE_CURRENCY_CODE ,
+		       sum(r.TRADE_AMOUNT) as consume_day_amount,
+		       count(r.TRADE_AMOUNT) as consume_day_count,
+		       sum(case when r.status = 'S' then r.TRADE_AMOUNT else 0 end) as consume_day_succ_amount,
+		       sum(case when r.status = 'S' then 1 else 0 end) as consume_day_succ_count,
+		       sum(f.refunded_amount) as refund_day_amount,
+		       count(f.refunded_amount) as refund_day_count,
+		       sum(case when f.status = 'S' then f.refunded_amount else 0 end) as refund_day_succ_amount,
+		       sum(case when f.status = 'S' then 1 else 0 end) as refund_day_succ_count
+		    from ps.tt_gateway_order r
+		    left join (Select *
+					   From (select a.*,
+									row_number() over(partition by GATEWAY_ORDER_NO order by GATEWAY_ORDER_NO) t
+							   from ps.tr_gateway_refund_order a)
+					  where t = 1) f
+		    on r.gw_order_id = f.GATEWAY_ORDER_NO
+		 where 1 = 1
+		   and r.GMT_DEAL <![CDATA[ >= ]]> TO_DATE(#balanceDate# || ' 00:00:00', 'YYYY-MM-DD HH24:MI:SS')
+		   and r.GMT_DEAL <![CDATA[ <= ]]> TO_DATE(#balanceDate# || ' 23:59:59','YYYY-MM-DD HH24:MI:SS')
+		   and f.GMT_DEAL <![CDATA[ >= ]]> TO_DATE(to_char(sysdate-1, 'YYYY-MM-DD') || ' 00:00:00', 'YYYY-MM-DD HH24:MI:SS')
+       	   and f.GMT_DEAL <![CDATA[ <= ]]> TO_DATE(to_char(sysdate-1, 'YYYY-MM-DD') || ' 23:59:59','YYYY-MM-DD HH24:MI:SS')
+		 group by r.member_code, r.MEMBER_NO, r.TRADE_CURRENCY_CODE)
+		 ,
+		begin_data as ( 
+		  select t.merchant_code,
+		         t.member_code,
+		         t.balance_date,
+		         t.currency,
+		         t.consume_begin_amount + t.consume_day_amount  as  consume_begin_amount,
+		         t.consume_begin_count + t.consume_day_count as consume_begin_count,
+		         t.consume_begin_succ_amount + t.consume_day_succ_amount as consume_begin_succ_amount,
+		         t.consume_begin_succ_count + t.consume_day_succ_count as consume_begin_succ_count,
+		         t.refund_begin_amount + t.refund_day_amount as refund_begin_amount,
+		         t.refund_begin_count + t.refund_day_count as refund_begin_count,
+		         t.refund_begin_succ_amount + t.refund_day_succ_amount as refund_begin_succ_amount,
+		         t.refund_begin_succ_count + t.refund_day_succ_count as refund_begin_succ_count
+		    from PS.TA_TRADE_DAILY t 
+		    where t.balance_date = #balanceDate#)
+		    
+		  select 'TA'||begin_data.balance_date||lpad(get_seq_next('SEQ_TA_TRADE_DAILY_ID'),5,'0'),
+		         to_char(sysdate-1,'YYYY-MM-DD'),
+		         begin_data.member_code,
+	             begin_data.member_code ,
+	             begin_data.currency,
+	             begin_data.consume_begin_amount,
+	             (case when day_data.consume_day_amount is null then 0 else day_data.consume_day_amount end),
+	             (case when begin_data.consume_begin_count is null then 0 else begin_data.consume_begin_count end),
+	             (case when day_data.consume_day_count is null then 0 else day_data.consume_day_count end),
+	             (case when begin_data.consume_begin_succ_amount is null then 0 else begin_data.consume_begin_succ_amount end),
+	             (case when day_data.consume_day_succ_amount is null then 0 else day_data.consume_day_succ_amount end),
+	             (case when begin_data.consume_begin_succ_count is null then 0 else begin_data.consume_begin_succ_count end),
+	             (case when day_data.consume_day_succ_count is null then 0 else day_data.consume_day_succ_count end),
+	             (case when begin_data.refund_begin_amount is null then 0 else begin_data.refund_begin_amount end),
+	             (case when day_data.refund_day_amount is null then 0 else day_data.refund_day_amount end),
+	             (case when begin_data.refund_begin_count is null then 0 else begin_data.refund_begin_count end),
+	             (case when day_data.refund_day_count is null then 0 else day_data.refund_day_count end),
+	             (case when begin_data.refund_begin_succ_amount is null then 0 else begin_data.refund_begin_succ_amount end),
+	             (case when day_data.refund_day_succ_amount is null then 0 else day_data.refund_day_succ_amount end),
+	             (case when begin_data.refund_begin_succ_count is null then 0 else begin_data.refund_begin_succ_count end),
+	             (case when day_data.refund_day_succ_count is null then 0 else day_data.refund_day_succ_count end)
+		  from day_data 
+		    right join  begin_data
+		    on day_data.member_code = begin_data.merchant_code
+		    and day_data.MEMBER_NO = begin_data.member_code
+		    and day_data.TRADE_CURRENCY_CODE = begin_data.currency
+	</insert>
+	
+	<!-- 增量初始化商户日结交易信息（新增商户、商户新增币种）(T-2) -->
+	<insert id="addedInitTradeDailyData" >
+	    insert into ps.ta_trade_daily (  
+		      BALANCE_ID ,
+		      BALANCE_DATE ,
+		      MERCHANT_CODE,
+		      MEMBER_CODE,
+		      CURRENCY,
+		      CONSUME_BEGIN_AMOUNT,
+		      CONSUME_DAY_AMOUNT,
+		      CONSUME_BEGIN_COUNT,
+		      CONSUME_DAY_COUNT,
+		      CONSUME_BEGIN_SUCC_AMOUNT,
+		      CONSUME_DAY_SUCC_AMOUNT,
+		      CONSUME_BEGIN_SUCC_COUNT,
+		      CONSUME_DAY_SUCC_COUNT,
+		      REFUND_BEGIN_AMOUNT,
+		      REFUND_DAY_AMOUNT,
+		      REFUND_BEGIN_COUNT,
+		      REFUND_DAY_COUNT,
+		      REFUND_BEGIN_SUCC_AMOUNT,
+		      REFUND_DAY_SUCC_AMOUNT,
+		      REFUND_BEGIN_SUCC_COUNT,
+		      REFUND_DAY_SUCC_COUNT,
+		      SETTLE_BEGIN_SUCC_AMOUNT,
+		      SETTLE_DAY_SUCC_AMOUNT,
+		      SETTLE_BEGIN_SUCC_COUNT,
+		      SETTLE_DAY_SUCC_COUNT
+		    ) 
+		select ADD_BALANCE_ID ,
+		      ADD_BALANCE_DATE ,
+		      ADD_MERCHANT_CODE,
+		      ADD_MEMBER_CODE,
+		      ADD_CURRENCY,
+		      ADD_CONSUME_BEGIN_AMOUNT,
+		      ADD_CONSUME_DAY_AMOUNT,
+		      ADD_CONSUME_BEGIN_COUNT,
+		      ADD_CONSUME_DAY_COUNT,
+		      ADD_CONSUME_BEGIN_SUCC_AMOUNT,
+		      ADD_CONSUME_DAY_SUCC_AMOUNT,
+		      ADD_CONSUME_BEGIN_SUCC_COUNT,
+		      ADD_CONSUME_DAY_SUCC_COUNT,
+		      ADD_REFUND_BEGIN_AMOUNT,
+		      ADD_REFUND_DAY_AMOUNT,
+		      ADD_REFUND_BEGIN_COUNT,
+		      ADD_REFUND_DAY_COUNT,
+		      ADD_REFUND_BEGIN_SUCC_AMOUNT,
+		      ADD_REFUND_DAY_SUCC_AMOUNT,
+		      ADD_REFUND_BEGIN_SUCC_COUNT,
+		      ADD_REFUND_DAY_SUCC_COUNT,
+		      ADD_SETTLE_BEGIN_SUCC_AMOUNT,
+		      ADD_SETTLE_DAY_SUCC_AMOUNT,
+		      ADD_SETTLE_BEGIN_SUCC_COUNT,
+		      ADD_SETTLE_DAY_SUCC_COUNT
+		from (
+		 with day_data as (
+		    select r.member_code ,
+		       r.MEMBER_NO ,
+		       r.TRADE_CURRENCY_CODE ,
+		       sum(r.TRADE_AMOUNT) as consume_day_amount,
+		       count(r.TRADE_AMOUNT) as consume_day_count,
+		       sum(case when r.status = 'S' then r.TRADE_AMOUNT else 0 end) as consume_day_succ_amount,
+		       sum(case when r.status = 'S' then 1 else 0 end) as consume_day_succ_count,
+		       sum(f.refunded_amount) as refund_day_amount,
+		       count(f.refunded_amount) as refund_day_count,
+		       sum(case when f.status = 'S' then f.refunded_amount else 0 end) as refund_day_succ_amount,
+		       sum(case when f.status = 'S' then 1 else 0 end) as refund_day_succ_count
+		    from ps.tt_gateway_order r
+		    left join (select *
+		         from (select a.*,row_number() over(partition by GATEWAY_ORDER_NO order by GATEWAY_ORDER_NO) t from ps.tr_gateway_refund_order a)
+		               where t = 1) f
+		    on r.gw_order_id = f.GATEWAY_ORDER_NO
+		    where 1 = 1
+		       and r.GMT_DEAL <![CDATA[ >= ]]> TO_DATE(to_char(sysdate-2, 'YYYY-MM-DD') || ' 00:00:00', 'YYYY-MM-DD HH24:MI:SS')
+		       and r.GMT_DEAL <![CDATA[ <= ]]> TO_DATE(to_char(sysdate-2, 'YYYY-MM-DD') || ' 23:59:59','YYYY-MM-DD HH24:MI:SS')
+		    group by r.member_code, r.MEMBER_NO, r.TRADE_CURRENCY_CODE)
+		   ,
+		   settle_begin_data as (
+		    select s.member_code ,
+		     s.MEMBER_NO ,
+		     s.TRADE_CURRENCY_CODE ,
+		     sum(case when s.settle_status = 'Y' then s.trade_amount else 0 end) as settle_begin_succ_amount,
+		     sum(case when s.settle_status = 'Y' then 1 else 0 end) as settle_begin_succ_count
+		    from ps.tt_gateway_order s
+		     where 1 = 1
+		     and s.GMT_DEAL <![CDATA[ >= ]]> TO_DATE('2010-01-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')
+		     and s.GMT_DEAL <![CDATA[ <= ]]> TO_DATE(to_char(sysdate-3, 'YYYY-MM-DD') || ' 23:59:59','YYYY-MM-DD HH24:MI:SS')
+		     group by s.member_code, s.MEMBER_NO, s.TRADE_CURRENCY_CODE
+		  ),
+		  settle_day_data as (
+		    select d.member_code ,
+		     d.MEMBER_NO ,
+		     d.TRADE_CURRENCY_CODE ,
+		     sum(case when d.settle_status = 'Y' then d.trade_amount else 0 end) as settle_day_succ_amount,
+		     sum(case when d.settle_status = 'Y' then 1 else 0 end) as settle_day_succ_count
+		    from ps.tt_gateway_order d
+		     where 1 = 1
+		   and d.GMT_DEAL <![CDATA[ >= ]]> TO_DATE(to_char(sysdate-2, 'YYYY-MM-DD') || ' 00:00:00', 'YYYY-MM-DD HH24:MI:SS')
+		   and d.GMT_DEAL <![CDATA[ <= ]]> TO_DATE(to_char(sysdate-2, 'YYYY-MM-DD') || ' 23:59:59','YYYY-MM-DD HH24:MI:SS')
+		     group by d.member_code, d.MEMBER_NO, d.TRADE_CURRENCY_CODE
+		   )
+		   ,
+		   begin_data as ( 
+		       select r.member_code ,
+		       r.MEMBER_NO,
+		       r.TRADE_CURRENCY_CODE ,
+		       sum(r.TRADE_AMOUNT) as consume_begin_amount,
+		       count(r.TRADE_AMOUNT) as consume_begin_count,
+		       sum(case when r.status = 'S' then r.TRADE_AMOUNT else 0 end) as consume_begin_succ_amount,
+		       sum(case when r.status = 'S' then 1 else 0 end) as consume_begin_succ_count,
+		       sum(f.refunded_amount) as refund_begin_amount,
+		       count(f.refunded_amount) as refund_begin_count,
+		       sum(case when f.status = 'S' then f.refunded_amount else 0 end) as refund_begin_succ_amount,
+		       sum(case when f.status = 'S' then 1 else 0 end) as refund_begin_succ_count
+		    from ps.tt_gateway_order r
+		    left join (select *
+		           from (select a.*,row_number() over(partition by GATEWAY_ORDER_NO order by GATEWAY_ORDER_NO) t
+		                 from ps.tr_gateway_refund_order a)
+		                 where t = 1) f
+		     on r.gw_order_id = f.GATEWAY_ORDER_NO
+		     where 1 = 1
+		     and r.GMT_DEAL <![CDATA[ >= ]]> TO_DATE('2010-01-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')
+		     and r.GMT_DEAL <![CDATA[ <= ]]> TO_DATE(to_char(sysdate-3, 'YYYY-MM-DD') || ' 23:59:59','YYYY-MM-DD HH24:MI:SS')
+		     group by r.member_code, r.MEMBER_NO, r.TRADE_CURRENCY_CODE)   
+		     select 'TA'||to_char(sysdate-2,'yyyymmdd')||lpad(get_seq_next('SEQ_TA_TRADE_DAILY_ID'),5,'0') as ADD_BALANCE_ID,
+		             to_char(sysdate-2,'YYYY-MM-DD') as ADD_BALANCE_DATE,
+		             begin_data.member_code as ADD_MERCHANT_CODE,
+		             begin_data.MEMBER_NO  as ADD_MEMBER_CODE,
+		             begin_data.TRADE_CURRENCY_CODE as ADD_CURRENCY,
+		             begin_data.consume_begin_amount as ADD_CONSUME_BEGIN_AMOUNT,
+		             (case when day_data.consume_day_amount is null then 0 else day_data.consume_day_amount end) as ADD_CONSUME_DAY_AMOUNT,
+		             (case when begin_data.consume_begin_count is null then 0 else begin_data.consume_begin_count end) as ADD_CONSUME_BEGIN_COUNT,
+		             (case when day_data.consume_day_count is null then 0 else day_data.consume_day_count end) as ADD_CONSUME_DAY_COUNT,
+		             (case when begin_data.consume_begin_succ_amount is null then 0 else begin_data.consume_begin_succ_amount end) as ADD_CONSUME_BEGIN_SUCC_AMOUNT,
+		             (case when day_data.consume_day_succ_amount is null then 0 else day_data.consume_day_succ_amount end) as ADD_CONSUME_DAY_SUCC_AMOUNT,
+		             (case when begin_data.consume_begin_succ_count is null then 0 else begin_data.consume_begin_succ_count end) as ADD_CONSUME_BEGIN_SUCC_COUNT,
+		             (case when day_data.consume_day_succ_count is null then 0 else day_data.consume_day_succ_count end) as ADD_CONSUME_DAY_SUCC_COUNT,
+		             (case when begin_data.refund_begin_amount is null then 0 else begin_data.refund_begin_amount end) as ADD_REFUND_BEGIN_AMOUNT,
+		             (case when day_data.refund_day_amount is null then 0 else day_data.refund_day_amount end) as ADD_REFUND_DAY_AMOUNT,
+		             (case when begin_data.refund_begin_count is null then 0 else begin_data.refund_begin_count end) as ADD_REFUND_BEGIN_COUNT,
+		             (case when day_data.refund_day_count is null then 0 else day_data.refund_day_count end) as ADD_REFUND_DAY_COUNT,
+		             (case when begin_data.refund_begin_succ_amount is null then 0 else begin_data.refund_begin_succ_amount end) as ADD_REFUND_BEGIN_SUCC_AMOUNT,
+		             (case when day_data.refund_day_succ_amount is null then 0 else day_data.refund_day_succ_amount end) as ADD_REFUND_DAY_SUCC_AMOUNT,
+		             (case when begin_data.refund_begin_succ_count is null then 0 else begin_data.refund_begin_succ_count end) as ADD_REFUND_BEGIN_SUCC_COUNT,
+		             (case when day_data.refund_day_succ_count is null then 0 else day_data.refund_day_succ_count end) as ADD_REFUND_DAY_SUCC_COUNT,
+		             (case when settle_begin_data.settle_begin_succ_amount is null then 0 else settle_begin_data.settle_begin_succ_amount end) as ADD_SETTLE_BEGIN_SUCC_AMOUNT,
+		             (case when settle_day_data.settle_day_succ_amount is null then 0 else settle_day_data.settle_day_succ_amount end) as ADD_SETTLE_DAY_SUCC_AMOUNT,
+		             (case when settle_begin_data.settle_begin_succ_count is null then 0 else settle_begin_data.settle_begin_succ_count end) as ADD_SETTLE_BEGIN_SUCC_COUNT,
+		             (case when settle_day_data.settle_day_succ_count is null then 0 else settle_day_data.settle_day_succ_count end) as ADD_SETTLE_DAY_SUCC_COUNT
+		        from day_data 
+		        right join  settle_day_data 
+		          on settle_day_data.member_code =  day_data.member_code
+		          and settle_day_data.MEMBER_NO =  day_data.MEMBER_NO
+		          and settle_day_data.TRADE_CURRENCY_CODE  =  day_data.TRADE_CURRENCY_CODE
+		        right join  settle_begin_data 
+		          on settle_begin_data.member_code =  day_data.member_code
+		          and settle_begin_data.MEMBER_NO =  day_data.MEMBER_NO
+		          and settle_begin_data.TRADE_CURRENCY_CODE  =  day_data.TRADE_CURRENCY_CODE         
+		        right join  begin_data
+		          on settle_begin_data.member_code = begin_data.member_code
+		          and settle_begin_data.MEMBER_NO = begin_data.MEMBER_NO
+		          and settle_begin_data.TRADE_CURRENCY_CODE = begin_data.TRADE_CURRENCY_CODE) add_data
+		     where not exists ( select * from ps.ta_trade_daily his_data where his_data.MERCHANT_CODE = add_data.ADD_MERCHANT_CODE
+				and his_data.CURRENCY = add_data.ADD_CURRENCY)
+	</insert>
+	
+	<select id="getTradeDaily" resultMap="taTradeDailyResult" parameterClass="java.util.Map">
+		SELECT 
+			<include refid="BASE_RESULT"/>
+		FROM PS.ta_trade_daily
+		WHERE 1=1
+		<isNotEmpty prepend="AND" property="merchantCode">
+			MERCHANT_CODE = #merchantCode#
+		</isNotEmpty>
+		<isNotEmpty prepend="AND" property="balanceDate">
+			BALANCE_DATE = #balanceDate#
+		</isNotEmpty>
+	</select>
+	<select id="queryMonthAgentTrade" resultMap="tradeBriefInfoResult" parameterClass="java.util.List">
+			SELECT GO.MEMBER_CODE MERCHANT_CODE, M.SHORT_NAME, GO.TRADE_CURRENCY_CODE CURRENCY_CODE, SUM(GO.TRADE_AMOUNT) TRADE_AMOUNT, COUNT(1) TRADE_COUNT 
+			FROM PS.TT_GATEWAY_ORDER GO 
+			INNER JOIN MA.TR_MERCHANT_BASE M ON GO.MEMBER_CODE=M.MERCHANT_CODE
+			WHERE TO_CHAR(GO.GMT_DEAL, 'YYYY-MM') = TO_CHAR(SYSDATE, 'YYYY-MM')   
+						<isNotEmpty prepend="AND">
+						  GO.AGENT_CODE IN 
+							<iterate open="(" close=")" conjunction=",">
+								#agentCodeList[]#
+							</iterate>
+						</isNotEmpty>
+						AND GO.STATUS='S'
+						GROUP BY GO.MEMBER_CODE, M.SHORT_NAME, GO.TRADE_CURRENCY_CODE
+	</select>
+	<select id="queryTodayAgentTrade" resultMap="tradeBriefInfoResult" parameterClass="java.util.List">
+			SELECT GO.MEMBER_CODE MERCHANT_CODE, M.SHORT_NAME, GO.TRADE_CURRENCY_CODE CURRENCY_CODE, SUM(GO.TRADE_AMOUNT) TRADE_AMOUNT, COUNT(1) TRADE_COUNT 
+			FROM PS.TT_GATEWAY_ORDER GO 
+			INNER JOIN MA.TR_MERCHANT_BASE M ON GO.MEMBER_CODE=M.MERCHANT_CODE
+			WHERE TO_CHAR(GO.GMT_DEAL, 'YYYY-MM-DD') = TO_CHAR(SYSDATE, 'YYYY-MM-DD')   
+						<isNotEmpty prepend="AND">
+						   GO.AGENT_CODE IN 
+							<iterate open="(" close=")" conjunction=",">
+								#agentCodeList[]#
+							</iterate>
+						</isNotEmpty>
+						AND GO.STATUS='S'
+						GROUP BY GO.MEMBER_CODE, M.SHORT_NAME, GO.TRADE_CURRENCY_CODE
+	</select>
+	<select id="queryMonthTrade" resultMap="tradeBriefInfoResult" parameterClass="java.lang.String">
+		<![CDATA[
+			SELECT T.MERCHANT_CODE, M.SHORT_NAME, T.CURRENCY CURRENCY_CODE, SUM(T.CONSUME_DAY_SUCC_AMOUNT) TRADE_AMOUNT, SUM(T.CONSUME_DAY_SUCC_COUNT) TRADE_COUNT 
+			FROM PS.TA_TRADE_DAILY T 
+			INNER JOIN MA.TR_MERCHANT_BASE M ON T.MERCHANT_CODE=M.MERCHANT_CODE  
+			WHERE TO_CHAR(TO_TIMESTAMP(T.BALANCE_DATE, 'YYYY-MM-DD'), 'YYYY-MM') = TO_CHAR(SYSDATE, 'YYYY-MM') 
+			AND T.MERCHANT_CODE=#merchantCode#
+			GROUP BY T.MERCHANT_CODE, M.SHORT_NAME, T.CURRENCY
+		]]>
+	</select>
+	<select id="queryTodayTrade" resultMap="tradeBriefInfoResult" parameterClass="java.lang.String">
+		<![CDATA[
+			SELECT GO.MEMBER_CODE MERCHANT_CODE, M.SHORT_NAME, GO.TRADE_CURRENCY_CODE CURRENCY_CODE, SUM(GO.TRADE_AMOUNT) TRADE_AMOUNT, COUNT(1) TRADE_COUNT 
+			FROM PS.TT_GATEWAY_ORDER GO 
+			INNER JOIN MA.TR_MERCHANT_BASE M ON GO.MEMBER_CODE=M.MERCHANT_CODE 
+			WHERE TO_CHAR(GO.GMT_DEAL, 'YYYY-MM-DD') = TO_CHAR(SYSDATE, 'YYYY-MM-DD')   
+			AND GO.MEMBER_CODE=#merchantCode# AND GO.STATUS='S'
+			GROUP BY GO.MEMBER_CODE, M.SHORT_NAME, GO.TRADE_CURRENCY_CODE
+		]]>
+	</select>
+</sqlMap>
