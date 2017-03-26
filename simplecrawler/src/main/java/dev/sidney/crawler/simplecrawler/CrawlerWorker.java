@@ -78,6 +78,8 @@ public class CrawlerWorker implements Runnable {
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 	}
 	
@@ -88,13 +90,17 @@ public class CrawlerWorker implements Runnable {
 	
 	private String getPageContent() throws ClientProtocolException, IOException {
 		HttpGet httpget = new HttpGet(this.getTaskItem().getUrl());
-		httpget.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:52.0) Gecko/20100101 Firefox/52.0");
+//		httpget.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:52.0) Gecko/20100101 Firefox/52.0");
+		httpget.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.22 Safari/537.36 SE 2.X MetaSr 1.0");
 //		httpget.setHeader("Accept-Encoding", "identity");
 		httpget.setHeader("Accept-Language", "zh-CN,zh;q=0.8,en-US;q=0.5,en;q=0.3");
 //		httpget.setHeader("Accept-Encoding", "gzip, deflate");
 		httpget.setHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
 //		httpget.setHeader("Host", "www.kuaidaili.com");
 //		httpget.setHeader("Connection", "keep-alive");
+		
+
+		
 		task.initHttpGet(httpget);
 //		System.out.println(httpget.getURI().toString());
 		CloseableHttpResponse response = this.getHttpClient().execute(httpget, HttpClientContext.create());

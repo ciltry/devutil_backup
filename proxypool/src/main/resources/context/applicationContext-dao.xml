@@ -18,7 +18,7 @@
 		<property name="fileEncoding" value="UTF-8" />
 		<property name="locations">
 			<list>
-				<value>file:C:\Users\Sidney\代理商\proxypool\src\main\resources\db1.properties</value>
+				<value>classpath:/db1.properties</value>
 			</list>
 		</property>
 	</bean>
@@ -28,13 +28,13 @@
 			<value>org.apache.derby.jdbc.EmbeddedDriver</value>
 		</property>
 		<property name="url">
-			<value>jdbc:derby:d:\dbstore\proxy;create=true</value>
+			<value>${url.DERBY}</value>
 		</property>
 		<property name="username">
-			<value></value>
+			<value>a</value>
 		</property>
 		<property name="password">
-			<value></value>
+			<value>a</value>
 		</property>
 	</bean>
 	

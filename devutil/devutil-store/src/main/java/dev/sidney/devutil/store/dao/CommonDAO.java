@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.springframework.jdbc.core.RowMapper;
 
+import dev.sidney.devutil.store.domain.DomainQuery;
 import dev.sidney.devutil.store.model.BaseModel;
 
 /**
@@ -54,6 +55,8 @@ public interface CommonDAO {
 	
 	<T extends BaseModel> List<T> queryForList(T model);
 	
+	<T extends BaseModel> List<T> queryForList(Class<T> claxx, DomainQuery query);
+	
 	<T extends BaseModel> List<T> queryForList(T model, String orderBy);
 
 	public abstract void init();
@@ -62,4 +65,6 @@ public interface CommonDAO {
 	int update(BaseModel model);
 	int update(BaseModel model,  String extraConditions, Object ... extraArgs);
 	long getSeqNextVal(String seqName);
+	
+	<T> T queryForObject(String sql, Object[] args, RowMapper<T> rowMapper);
 }

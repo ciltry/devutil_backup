@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.net.JarURLConnection;
 import java.net.URL;
 import java.net.URLDecoder;
@@ -35,10 +36,13 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.support.JdbcDaoSupport;
+import org.springframework.util.ReflectionUtils;
 import org.springframework.util.StringUtils;
 
+import dev.sidney.devutil.store.annotation.FieldMapping;
 import dev.sidney.devutil.store.annotation.Model;
 import dev.sidney.devutil.store.dao.CommonDAO;
+import dev.sidney.devutil.store.domain.DomainQuery;
 import dev.sidney.devutil.store.enums.DBTypeEnum;
 import dev.sidney.devutil.store.enums.FieldType;
 import dev.sidney.devutil.store.exception.StoreException;
@@ -480,17 +484,22 @@ public abstract class CommonDAOImpl extends JdbcDaoSupport implements CommonDAO 
 	
 	
 	private <T extends BaseModel> List<T> queryForList(String sql, final T model) {
-		List<T> res = new ArrayList<T>();
 		List<Object> args = getArgsFromModel(model);
+		Class<T> claxx = (Class<T>) model.getClass();
+		return this.queryForList(claxx, sql, args);
+	}
+	
+	private <T extends BaseModel> List<T> queryForList(Class<T> claxx, String sql, List<Object> args) {
 		logger.info("【" + sql + "】 args:" + args);
+		List<T> res = new ArrayList<T>();
 		List<Map<String, Object>> list = this.getJdbcTemplate().queryForList(sql, args.toArray());
-		List<Field> fieldList = getManagedFieldList(model.getClass());
+		List<Field> fieldList = getManagedFieldList(claxx);
 		for (Map<String, Object> entry: list) {
 			T record = null;
 			try {
-				record = (T) model.getClass().newInstance();
+				record = (T) claxx.newInstance();
 			} catch (Exception e) {
-				logger.error("创建查询结果对象失败 " + model.getClass().getName(), e);
+				logger.error("创建查询结果对象失败 " + claxx.getName(), e);
 				throw new StoreException("创建查询结果对象失败", e);
 			}
 			
@@ -522,6 +531,13 @@ public abstract class CommonDAOImpl extends JdbcDaoSupport implements CommonDAO 
 		return this.queryForList(sql, model);
 	}
 
+	@Override
+	public <T extends BaseModel> List<T> queryForList(Class<T> claxx,
+			DomainQuery query) {
+		String sql = this.getQueryForObjectSql(claxx, query);
+		List<Object> argList = query.getArgList();
+		return this.queryForList(claxx, sql, argList);
+	}
 
 
 	private FieldType getFieldType(Field field) {
@@ -541,6 +557,52 @@ public abstract class CommonDAOImpl extends JdbcDaoSupport implements CommonDAO 
 		StringBuilder sql = new StringBuilder();
 		sql.append(String.format("DELETE FROM %s.%s WHERE id=?", this.getDefaultSchema(), tableName));
 		return sql.toString();
+	}
+	
+	private <T extends BaseModel> String getQueryForObjectSql(Class<T> claxx,
+			DomainQuery query, String ... orderBy) {
+		String tableName = this.getTableName(claxx);
+		List<String> columnNamelist = getColumnNameList(this.getManagedFieldList(claxx));
+		
+		
+		StringBuilder sql = new StringBuilder();
+		
+		// 字段列表
+		StringBuilder columnNameListStr = new StringBuilder();
+		for (int i = 0; i < columnNamelist.size(); i++) {
+			if (i > 0) {
+				columnNameListStr.append(", ");
+			}
+			columnNameListStr.append(columnNamelist.get(i));
+		}
+		
+		String whereClause = getWhereClause(claxx, query);
+		
+		
+		sql.append(String.format("SELECT %s FROM %s.%s %s", columnNameListStr, this.getDefaultSchema(), tableName, whereClause));
+		
+		return sql.toString();
+	}
+	
+	private <T extends BaseModel> Map<String, Field> getFieldMapping(Class<T> claxx) {
+		java.lang.reflect.Field[] fields = claxx.getDeclaredFields();
+		Map<String, Field> map = new HashMap<String, Field>();
+		for (Field field: fields) {
+			FieldMapping fieldMappingAnnotation = field.getAnnotation(FieldMapping.class);
+			if (fieldMappingAnnotation != null && (field.getModifiers() & Modifier.STATIC) > 0) {
+				String fieldName = fieldMappingAnnotation.value();
+				for (int i = 0;i < fields.length; i++) {
+					if (fieldName.equals(fields[i].getName())) {
+						map.put(ReflectionUtils.getField(field, null).toString(), fields[i]);
+						break;
+					}
+				}
+			}
+		}
+		if (claxx.getSuperclass() != Object.class) {
+			map.putAll(getFieldMapping((Class<? extends BaseModel>) claxx.getSuperclass()));
+		}
+		return map;
 	}
 	
 	private <T extends BaseModel> String getQueryForObjectSql(T model) {
@@ -612,6 +674,43 @@ public abstract class CommonDAOImpl extends JdbcDaoSupport implements CommonDAO 
 		return list;
 	}
 	
+	private String getWhereClause(Class<? extends BaseModel> claxx, DomainQuery query) {
+		return "WHERE " + getWhereCondition(claxx, query);
+	}
+	private String getWhereCondition(Class<? extends BaseModel> claxx, DomainQuery query) {
+		Map<String, Field> map = this.getFieldMapping(claxx);
+		
+		List<List<DomainQuery>> list = query.getList();
+		StringBuilder whereClause = new StringBuilder();
+		if (query.getOperator() != null) {
+			if (list.size() > 1) {
+				whereClause.append("(");
+			}
+			Field field = map.get(query.getField());
+			String columnName = this.getColumnName(field);
+			whereClause.append(String.format("%s %s ?", columnName, query.getOperator()));
+			
+			if (list.size() > 0 && list.get(0).size() > 0) {
+				for (int i = 0; i < list.get(0).size(); i++) {
+					whereClause.append(" AND ").append(this.getWhereCondition(claxx, list.get(0).get(i)));
+				}
+			}
+			if (list.size() > 1) {
+				for (int i = 1; i < list.size(); i++) {
+					whereClause.append(" OR ");
+					for (int j = 0; j < list.get(i).size(); j++) {
+						if (j > 0) {
+							whereClause.append(" AND ");
+						}
+						whereClause.append(this.getWhereCondition(claxx, list.get(i).get(j)));
+					}
+				}
+				whereClause.append(")");
+			}
+		}
+		return whereClause.toString();
+	}
+	
 	private String getWhereClause(BaseModel model, String extraConditions) {
 		StringBuilder where = new StringBuilder();
 		List<Field> fieldList = this.getManagedFieldList(model.getClass());
@@ -661,8 +760,10 @@ public abstract class CommonDAOImpl extends JdbcDaoSupport implements CommonDAO 
 		return list;
 	}
 	
-	private String getColumnName(Field field) {
-		return field.getName();
+	protected String getColumnName(Field field) {
+		dev.sidney.devutil.store.annotation.Field fieldAnnotation = field.getAnnotation(dev.sidney.devutil.store.annotation.Field.class);
+		fieldAnnotation.columnName();
+		return StringUtils.isEmpty(fieldAnnotation.columnName()) ? field.getName() : fieldAnnotation.columnName();
 	}
 	
 	
@@ -901,6 +1002,14 @@ public abstract class CommonDAOImpl extends JdbcDaoSupport implements CommonDAO 
 			}});
 		return value;
 	}
-	
+
+
+
+	@Override
+	public <T> T queryForObject(String sql, Object[] args,
+			RowMapper<T> rowMapper) {
+		return this.getJdbcTemplate().queryForObject(sql, args, rowMapper);
+	}
+
 }
  

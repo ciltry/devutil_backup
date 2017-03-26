@@ -4,6 +4,7 @@
 package dev.sidney.crawler.simplecrawler.model;
 
 import dev.sidney.devutil.store.annotation.Field;
+import dev.sidney.devutil.store.annotation.FieldMapping;
 import dev.sidney.devutil.store.annotation.Model;
 import dev.sidney.devutil.store.enums.FieldType;
 import dev.sidney.devutil.store.model.BaseModel;
@@ -15,6 +16,11 @@ import dev.sidney.devutil.store.model.BaseModel;
 @Model(tableName="TASK_ITEM")
 public class TaskItem extends BaseModel {
 
+	@FieldMapping("status")
+	public static final String COLUMN_STATUS = "STATUS";
+	@FieldMapping("url")
+	public static final String COLUMN_URL = "URL";
+	
 	/**
 	 * uid
 	 */
@@ -23,9 +29,9 @@ public class TaskItem extends BaseModel {
 	private String taskId;
 	@Field(comment="父ID", type=FieldType.CHAR, size=36)
 	private String parentTaskItem;
-	@Field(comment="url", type=FieldType.VARCHAR2, size=3000, nullable=false)
+	@Field(comment="url", type=FieldType.VARCHAR2, size=3000, columnName=COLUMN_URL, nullable=false)
 	private String url;
-	@Field(comment="状态 I: 初始状态, P: 处理中, E:异常，S: 结束", type=FieldType.CHAR, size=1, nullable = false)
+	@Field(comment="状态 I: 初始状态, P: 处理中, E:异常，S: 结束", type=FieldType.CHAR, size=1, columnName=COLUMN_STATUS, nullable = false)
 	private String status;
 	@Field(comment="异常追踪", type=FieldType.VARCHAR2, size = 4000)
 	private String exceptionTrace;

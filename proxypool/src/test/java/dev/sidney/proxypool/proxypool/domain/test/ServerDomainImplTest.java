@@ -49,7 +49,7 @@ public class ServerDomainImplTest {
 		dto.setSpeed(300);
 		serverDomain.insert(dto);
 		
-		ServerDTO d = serverDomain.getById(dto.getId());
+		ServerDTO d = serverDomain.queryById(dto.getId());
 		
 		System.out.println(d);
 	}

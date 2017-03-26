@@ -3,12 +3,16 @@
  */
 package dev.sidney.crawler.simplecrawler;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -121,7 +125,9 @@ public abstract class AbstractCrawlerTask implements ICrawlerTask, Runnable {
 			}
 			
 		}
-		executorService = Executors.newFixedThreadPool(this.getMaxThreads() + 1);
+//		executorService = Executors.newFixedThreadPool(this.getMaxThreads() + 1);
+		BlockingQueue<Runnable> queue = new ArrayBlockingQueue<Runnable>(3);
+		executorService = new ThreadPoolExecutor(4, 4, 1, TimeUnit.HOURS, queue, new ThreadPoolExecutor.CallerRunsPolicy());
 		executorService.execute(this);
 		return this.getTaskId();
 	}
@@ -277,8 +283,29 @@ public abstract class AbstractCrawlerTask implements ICrawlerTask, Runnable {
 		updateDto.setStatus(TaskItemStatusEnum.PROCESSING.getCode());
 		this.taskItemDomain.updateById(updateDto);
 	}
-	public static void main(String[] args) throws MalformedURLException {
-		System.out.println(AbstractCrawlerTask.class.getResource("logback-test.xml").getFile());
-	}
 	
+	public static void main(String[] args) throws IOException, InterruptedException {  
+        
+        BlockingQueue<Runnable> queue = new ArrayBlockingQueue<Runnable>(0);  
+          
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(4, 4, 1, TimeUnit.HOURS, queue, new ThreadPoolExecutor.CallerRunsPolicy());  
+          
+        for (int i = 0; i < 10; i++) {  
+            final int index = i;  
+            System.out.println("task: " + (index+1));  
+            Runnable run = new Runnable() {  
+                @Override  
+                public void run() {  
+                    System.out.println("thread start" + (index+1));  
+                    try {  
+                        Thread.sleep(Long.MAX_VALUE);  
+                    } catch (InterruptedException e) {  
+                        e.printStackTrace();  
+                    }  
+                    System.out.println("thread end" + (index+1));  
+                }  
+            };  
+            executor.execute(run);  
+        }  
+    }  
 }

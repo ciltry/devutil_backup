@@ -50,12 +50,12 @@ public class CommonDAODerbyImpl extends CommonDAOImpl {
 			boolean nullable = fieldAnnotation.nullable();
 			int p = fieldAnnotation.p();
 			int s = fieldAnnotation.s();
-			
+			String columnName = getColumnName(field);
 			if (i > 0) {
 				sql.append(",");
 			}
 			sql.append("\n");
-			String fieldSql = String.format("    %s %s%s%s", field.getName(), getActualDbType(type, size, p, s), nullable ? "" : " NOT NULL", fieldComment == null ? "" : "");
+			String fieldSql = String.format("    %s %s%s%s", columnName, getActualDbType(type, size, p, s), nullable ? "" : " NOT NULL", fieldComment == null ? "" : "");
 			sql.append(fieldSql);
 		}
 		

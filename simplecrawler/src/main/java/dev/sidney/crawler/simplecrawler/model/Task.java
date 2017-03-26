@@ -13,14 +13,17 @@ import dev.sidney.devutil.store.model.BaseModel;
  */
 public class Task extends BaseModel {
 
+	public static final String COLUMN_TASK_NAME = "TASK_NAME";
+	public static final String COLUMN_START_URL = "START_URL";
+	
 	/**
 	 * uid
 	 */
 	private static final long serialVersionUID = -7968585889476164764L;
 	
-	@Field(comment="任务名")
+	@Field(comment="任务名", columnName=COLUMN_TASK_NAME)
 	private String taskName;
-	@Field(comment="入口url", type=FieldType.VARCHAR2, size=3000, nullable=false)
+	@Field(comment="入口url", type=FieldType.VARCHAR2, size=3000, columnName=COLUMN_START_URL, nullable=false)
 	private String startUrl;
 	
 	

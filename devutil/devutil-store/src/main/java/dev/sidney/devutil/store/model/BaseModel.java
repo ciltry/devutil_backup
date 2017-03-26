@@ -10,6 +10,7 @@ import org.apache.commons.lang.builder.ReflectionToStringBuilder;
 import org.apache.commons.lang.builder.ToStringStyle;
 
 import dev.sidney.devutil.store.annotation.Field;
+import dev.sidney.devutil.store.annotation.FieldMapping;
 import dev.sidney.devutil.store.annotation.Model;
 import dev.sidney.devutil.store.enums.FieldType;
 
@@ -21,6 +22,13 @@ import dev.sidney.devutil.store.enums.FieldType;
 @Model(primaryKey={"id"}, tableName="")
 public class BaseModel implements java.io.Serializable {
 
+	@FieldMapping("id")
+	public static final String COLUMN_ID = "ID";
+	@FieldMapping("gmtCreate")
+	public static final String COLUMN_GMT_CREATE = "GMT_CREATE";
+	@FieldMapping("gmtModified")
+	public static final String COLUMN_GMT_MODIFIED = "GMT_MODIFIED";
+	
 	/**
 	 * uid
 	 */
@@ -28,12 +36,12 @@ public class BaseModel implements java.io.Serializable {
 	
 	private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	
-	@Field(type=FieldType.CHAR, size=36, nullable=false)
+	@Field(type=FieldType.CHAR, size=36, columnName=COLUMN_ID, nullable=false)
 	private String id;
 
-	@Field(comment="创建时间", type=FieldType.TIMESTAMP, nullable=false)
+	@Field(comment="创建时间", type=FieldType.TIMESTAMP, columnName=COLUMN_GMT_CREATE, nullable=false)
 	private Date gmtCreate;
-	@Field(comment="修改时间", type=FieldType.TIMESTAMP, nullable=false)
+	@Field(comment="修改时间", type=FieldType.TIMESTAMP, columnName=COLUMN_GMT_MODIFIED, nullable=false)
 	private Date gmtModified;
 	
 	public String getId() {

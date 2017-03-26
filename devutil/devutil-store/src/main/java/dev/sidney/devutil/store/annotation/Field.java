@@ -66,6 +66,12 @@ public @interface Field {
 	public int s() default 2;
 	
 	/**
+	 * 表字段名
+	 * @return
+	 */
+	public String columnName() default "";
+	
+	/**
 	 * 备注
 	 * @return
 	 */
